@@ -9,6 +9,7 @@ onready var global = get_node("/root/global")
 
 export var scale = 100
 export var offset_below_0 = 0.05
+export var speed = 1.0
 
 var riders = []
 var roads = []
@@ -48,24 +49,43 @@ func _ready():
 		
 		roads.append(road)
 	
-	var rider = rider_scene.instance()
-	add_child(rider)
-	
-	rider.position = Vector2(0, current_level.terrain[0])
-	global.camera.follow(rider)
-	
-	riders.append(rider)
+	for i in range(3):
+		var rider = rider_scene.instance()
+		add_child(rider)
+		
+		rider.set_color(Color(1 if i == 0 else 0, 1 if i == 1 else 0, 1 if i == 2 else 0, 1))
+		rider.mountain = 75
+		rider.flat = 75
+		rider.descent = 75
+		
+		if i == 0:
+			rider.mountain = 80
+		elif i == 1:
+			rider.flat = 80
+		elif i == 2:
+			rider.descent = 80
+		
+		rider.position = Vector2(0, current_level.terrain[0])
+		riders.append(rider)
+
+	global.camera.follow(riders[0])
 
 func _process(delta):
-	pass
+	if Input.is_action_pressed("speed_up"):
+		speed *= 1.5
+	elif Input.is_action_pressed("speed_down"):
+		speed /= 1.5
+		
+	for rider in riders:
+		rider.update_rider(delta * speed)
 	
 func get_slope_color(gradient):
 	if gradient < 0:
-		if gradient < 10:
-			var value = 1.0 - gradient / 10.0
+		if gradient < -10:
+			var value = 1.0 - gradient / -10.0
 			return Color(value, 1, value, 1)
 		else:
-			gradient = min(gradient, 25.0)
+			gradient = min(-gradient, 25.0)
 			return Color(0, 1.0 - (gradient - 10.0) / 15.0, 0, 1)
 	else:
 		if gradient < 4:
